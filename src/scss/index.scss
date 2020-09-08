@@ -13,9 +13,11 @@ $color4: #0025f1;
 
 #player {
   height: 100vh;
+  overflow: hidden;
   background: $backgroundColor;
   .header {
     text-align: center;
+    height: 110px;
     h1 {
       padding-top: 20px;
       color: $color1;
@@ -26,8 +28,6 @@ $color4: #0025f1;
       color: $color2;
       font-size: 14px;
     }
-  }
-  .area-effect {
     .balls {
       display: flex;
       justify-content: center;
@@ -49,13 +49,30 @@ $color4: #0025f1;
         }
       }
     }
+  }
+  .panels {
+    width: 200vw;
+    display: flex;
+    height: calc(100vh - 260px);
+    align-items: center;
+    transition: transform 0.3s;
+    &.panel1 {
+      transform: translateX(0vw);
+    }
+    &.panel2 {
+      transform: translateX(-100vw);
+    }
+
     .panel-effect {
+      width: 100vw;
+      height: 100%;
       .effect {
         position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 50vh;
+
         div {
           background-size: contain;
           position: absolute;
@@ -94,15 +111,78 @@ $color4: #0025f1;
         }
       }
     }
+    .panel-lyrics {
+      width: 100vw;
+      height: 100%;
+      background: red;
+    }
   }
-  .buttons {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    svg {
-      width: 24px;
-      height: 24px;
-      margin: 0 20px;
+  .footer {
+    height: 150px;
+    .buttons {
+      display: flex;
+      justify-content: center;
+
+      svg {
+        width: 24px;
+        height: 24px;
+        margin: 0 20px;
+      }
+    }
+    .bar-area {
+      color: $color2;
+      font-size: 12px;
+      display: flex;
+      padding: 0 20px;
+      margin-top: 20px;
+      align-items: center;
+      .time-start {
+        order: 1;
+      }
+      .time-end {
+        order: 3;
+      }
+      .bar {
+        order: 2;
+        flex: 1;
+        height: 4px;
+        background: $color4;
+        border-radius: 2px;
+        margin: 0 10px;
+        .progress {
+          width: 30%;
+          height: 100%;
+          border-radius: 2px;
+          background: $color3;
+          position: relative;
+          &::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: -7px;
+            display: block;
+            width: 16px;
+            height: 16px;
+            background: url(../svg/progress.svg) 0 0 no-repeat;
+            background-size: contain;
+          }
+        }
+      }
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding: 0 20px;
+      svg {
+        width: 28px;
+        height: 28px;
+        &.btn-play-pause {
+          width: 50px;
+          height: 50px;
+        }
+      }
     }
   }
 }
