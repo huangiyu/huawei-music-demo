@@ -1,11 +1,11 @@
 import "./icons.js";
-
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+import Swiper from "./swiper.js";
 
 class Player {
   constructor(node) {
-    this.root = typeof node === "string" ? $(node) : node;
+    this.root = typeof node === "string" ? document.querySelector(node) : node;
+    this.$ = (selector) => document.querySelector(selector);
+    this.$$ = (selector) => document.querySelectorAll(selector);
     this.songList = [];
     this.currentIndex = 0;
     this.audio = new Audio();
@@ -26,7 +26,7 @@ class Player {
 
   bind() {
     let self = this;
-    this.root.querySelector(".btn-play-pause").onclick = function () {
+    this.$(".btn-play-pause").onclick = function () {
       if (this.classList.contains("playing")) {
         self.audio.pause();
         this.classList.remove("playing");
@@ -39,29 +39,36 @@ class Player {
         this.querySelector("use").setAttribute("xlink:href", "#icon-pause");
       }
     };
-    this.root.querySelector(".btn-pre").onclick = function () {
+    this.$(".btn-pre").onclick = function () {
       self.playPrevsong();
     };
-    this.root.querySelector(".btn-next").onclick = function () {
+    this.$(".btn-next").onclick = function () {
       self.playNextsong();
     };
+
+    let swiper = new Swiper(this.$(".panels"));
+    swiper.on("swipeLeft", function () {
+      console.log(this);
+      this.classList.remove("panel1");
+      this.classList.add("panel2");
+    });
+    swiper.on("swipeRight", function () {
+      console.log(this);
+      this.classList.remove("panel2");
+      this.classList.add("panel1");
+    });
   }
 
   playPrevsong() {
     this.currentIndex =
       (this.songList.length + this.currentIndex - 1) % this.songList.length;
     this.audio.src = this.songList[this.currentIndex].url;
-    this.audio.oncanplaythrough = () => {
-      this.audio.play();
-    };
+    this.audio.oncanplaythrough = () => this.audio.play(); //当audio可以播放的时候，再去播放。防止音频未加载好，用户点击太快出bug
   }
   playNextsong() {
-    this.currentIndex =
-      (this.songList.length + this.currentIndex + 1) % this.songList.length;
+    this.currentIndex = (this.currentIndex + 1) % this.songList.length;
     this.audio.src = this.songList[this.currentIndex].url;
-    this.audio.oncanplaythrough = () => {
-      this.audio.play();
-    };
+    this.audio.oncanplaythrough = () => this.audio.play();
   }
 }
 
