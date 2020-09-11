@@ -15,8 +15,8 @@
 #player .header h1 {
   padding-top: 20px;
   color: #fff;
-  font-size: 25px;
-  margin-bottom: 5px;
+  font-size: 22px;
+  margin-bottom: 3px;
 }
 #player .header p {
   color: #868aaf;
@@ -101,7 +101,17 @@
 #player .panels .panel-lyrics {
   width: 100vw;
   height: 100%;
-  background: red;
+  background: #060a3d;
+  text-align: center;
+  font-size: 13px;
+  overflow: hidden;
+  line-height: 2;
+}
+#player .panels .panel-lyrics p {
+  color: #868aaf;
+}
+#player .panels .panel-lyrics p.current {
+  color: #fff;
 }
 #player .footer {
   height: 150px;

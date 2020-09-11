@@ -268,6 +268,8 @@ var Player = /*#__PURE__*/function () {
     this.songList = [];
     this.currentIndex = 0;
     this.audio = new Audio();
+    this.lyricsArr = [];
+    this.lyricIndex = -1;
     this.start();
     this.bind(); //https://huangiyu.github.io/data-mock/huawei-music/music-list.json
   }
@@ -280,9 +282,12 @@ var Player = /*#__PURE__*/function () {
       fetch("https://huangiyu.github.io/data-mock/huawei-music/music-list.json").then(function (res) {
         return res.json();
       }).then(function (data) {
+        /* console.log(this)
         console.log(data);
+        console.log(this.currentIndex) */
         _this.songList = data;
-        _this.audio.src = _this.songList[_this.currentIndex].url;
+
+        _this.loadSong();
       });
     }
   }, {
@@ -305,49 +310,143 @@ var Player = /*#__PURE__*/function () {
       };
 
       this.$(".btn-pre").onclick = function () {
-        self.playPrevsong();
+        self.currentIndex = (self.songList.length + self.currentIndex - 1) % self.songList.length;
+        self.loadSong();
+        self.playsong();
       };
 
       this.$(".btn-next").onclick = function () {
-        self.playNextsong();
+        self.currentIndex = (self.currentIndex + 1) % self.songList.length;
+        self.loadSong();
+        self.playsong();
+      };
+
+      this.audio.ontimeupdate = function () {
+        self.locateLyric();
+        self.setProgressBar();
       };
 
       var swiper = new _swiper.default(this.$(".panels"));
       swiper.on("swipeLeft", function () {
-        console.log(this);
         this.classList.remove("panel1");
         this.classList.add("panel2");
       });
       swiper.on("swipeRight", function () {
-        console.log(this);
         this.classList.remove("panel2");
         this.classList.add("panel1");
       });
     }
   }, {
-    key: "playPrevsong",
-    value: function playPrevsong() {
+    key: "loadSong",
+    value: function loadSong() {
       var _this2 = this;
 
-      this.currentIndex = (this.songList.length + this.currentIndex - 1) % this.songList.length;
-      this.audio.src = this.songList[this.currentIndex].url;
+      var songObj = this.songList[this.currentIndex];
+      this.$(".header h1").innerText = songObj.title;
+      this.$(".header p").innerText = songObj.author;
+      this.audio.src = songObj.url;
+
+      this.audio.onloadedmetadata = function () {
+        return _this2.$(".time-end").innerText = _this2.formateTime(_this2.audio.duration);
+      };
+
+      this.loadLyric();
+    }
+  }, {
+    key: "playsong",
+    value: function playsong() {
+      var _this3 = this;
 
       this.audio.oncanplaythrough = function () {
-        return _this2.audio.play();
+        return _this3.audio.play();
       }; //当audio可以播放的时候，再去播放。防止音频未加载好，用户点击太快出bug
 
     }
   }, {
-    key: "playNextsong",
-    value: function playNextsong() {
-      var _this3 = this;
+    key: "loadLyric",
+    value: function loadLyric() {
+      var _this4 = this;
 
-      this.currentIndex = (this.currentIndex + 1) % this.songList.length;
-      this.audio.src = this.songList[this.currentIndex].url;
+      fetch(this.songList[this.currentIndex].lyric).then(function (res) {
+        return res.json();
+      }).then(function (data) {
+        _this4.setLyrics(data.lrc.lyric);
 
-      this.audio.oncanplaythrough = function () {
-        return _this3.audio.play();
-      };
+        window.lyrics = data.lrc.lyrics;
+      });
+    }
+  }, {
+    key: "locateLyric",
+    value: function locateLyric() {
+      var currentTime = this.audio.currentTime * 1000;
+      var nextLineTime = this.lyricsArr[this.lyricIndex + 1][0];
+
+      if (currentTime > nextLineTime && this.lyricIndex < this.lyricsArr.length - 1) {
+        this.lyricIndex++;
+        var node = this.$('[data-time="' + this.lyricsArr[this.lyricIndex][0] + '"]');
+        this.setLineToCenter(node);
+        this.$$('.panel-effect .lyric p')[0].innerText = this.lyricsArr[this.lyricIndex][1];
+        this.$$('.panel-effect .lyric p')[1].innerText = this.lyricsArr[this.lyricIndex + 1] ? this.lyricsArr[this.lyricIndex + 1][1] : '';
+      }
+    }
+  }, {
+    key: "setLyrics",
+    value: function setLyrics(lyrics) {
+      this.lyricIndex = 0;
+      var fragment = document.createDocumentFragment();
+      var lyricsArr = [];
+      this.lyricsArr = lyricsArr;
+      lyrics.split(/\n/).filter(function (str) {
+        return str.match(/\[.+?\]/);
+      }).forEach(function (line) {
+        var str = line.replace(/\[.+?\]/g, "");
+        line.match(/\[.+?\]/g).forEach(function (t) {
+          t = t.replace(/[\[\]]/g, "");
+          var millseconds = parseInt(t.slice(0, 2)) * 60 * 1000 + parseInt(t.slice(3, 5)) * 1000 + parseInt(t.slice(6));
+          lyricsArr.push([millseconds, str]);
+        });
+      });
+      lyricsArr.sort(function (v1, v2) {
+        if (v1[0] > v2[0]) {
+          return 1;
+        } else {
+          return -1;
+        }
+      }).forEach(function (line) {
+        var node = document.createElement("p");
+        node.setAttribute("data-time", line[0]);
+        node.innerText = line[1];
+        fragment.appendChild(node);
+      });
+      this.$(".panel-lyrics .container").innerHTML = "";
+      this.$('.panel-lyrics .container').appendChild(fragment);
+    }
+  }, {
+    key: "setLineToCenter",
+    value: function setLineToCenter(node) {
+      var translateY = node.offsetTop - this.$('.panel-lyrics').offsetHeight / 2;
+      translateY = translateY > 0 ? translateY : 0;
+      this.$(".panel-lyrics .container").style.transform = "translateY(-".concat(translateY, "px)");
+      this.$$('.panel-lyrics p').forEach(function (node) {
+        return node.classList.remove('current');
+      });
+      node.classList.add('current');
+    }
+  }, {
+    key: "setProgressBar",
+    value: function setProgressBar() {
+      var percent = this.audio.currentTime * 100 / this.audio.duration + "%";
+      this.$(".bar .progress").style.width = percent;
+      this.$(".time-start").innerText = this.formateTime(this.audio.currentTime);
+    }
+  }, {
+    key: "formateTime",
+    value: function formateTime(secondsTotal) {
+      var minutes = parseInt(secondsTotal / 60);
+      minutes = minutes >= 10 ? "" + minutes : "0" + minutes;
+      var seconds = parseInt(secondsTotal % 60);
+      seconds = seconds >= 10 ? "" + seconds : "0" + seconds;
+      return minutes + ":" + seconds;
     }
   }]);
 
@@ -383,7 +482,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50086" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63821" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
