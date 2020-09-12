@@ -64,11 +64,14 @@ class Player {
     swiper.on("swipeLeft", function () {
       this.classList.remove("panel1");
       this.classList.add("panel2");
+      console.log('left')
 
     });
     swiper.on("swipeRight", function () {
       this.classList.remove("panel2");
       this.classList.add("panel1");
+      console.log('right')
+
     });
   }
 
